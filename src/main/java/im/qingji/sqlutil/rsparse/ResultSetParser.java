@@ -19,4 +19,5 @@ public interface ResultSetParser<E> {
 	 * @throws SQLException
 	 */
 	public E parse(ResultSet rs, Class<E> e) throws SQLException;
+	
 }

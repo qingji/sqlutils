@@ -61,11 +61,13 @@ public class SQLUtilConfigurator {
 				if(file != null && file.exists()) {
 					load(file);
 				} else {
-					System.err.println("Could not read default configuration file '"+DEFAULT_PROPERTIE_NAME+"'");
+					System.err.println("Could not read default config file '"+DEFAULT_PROPERTIE_NAME+"'");
+					System.out.println("Please check config file or load it by hand.");
 				}
 			}
 		} catch (Exception e) {
 			System.err.println("Could not read default configuration file '"+DEFAULT_PROPERTIE_NAME+"'");
+			e.printStackTrace();
 		}
 	}
 

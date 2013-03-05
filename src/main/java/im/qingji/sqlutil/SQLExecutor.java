@@ -11,10 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * SQL执行器.
@@ -36,8 +33,9 @@ import java.util.Map.Entry;
 public class SQLExecutor {
 
 	private Connection connection;
-	private Map<String, PreparedStatement> stateMap = new HashMap<String, PreparedStatement>();
 
+	private int queryTimeout = 0;
+	
 	/**
 	 * 根据Connection 生成执行器。 当执行器关闭时，也就代表着Connection关闭。
 	 * 
@@ -57,6 +55,14 @@ public class SQLExecutor {
 		this.connection = connection;
 	}
 
+	
+	public int getQueryTimeout() {
+	    return queryTimeout;
+    }
+	public void setQueryTimeout(int queryTimeout) {
+	    this.queryTimeout = queryTimeout;
+    }
+	
 	public <E> int insert(E e) throws SQLException {
 		return insert(e, null);
 	}
@@ -90,12 +96,7 @@ public class SQLExecutor {
 		try {
 			return execute(ps, parametes);
 		} finally {
-			try {
-				ps.clearParameters();
-				ps.clearBatch();
-			} catch (Exception e) {
-				stateMap.remove(sql);
-			}
+			close(ps);
 		}
 	}
 
@@ -113,12 +114,7 @@ public class SQLExecutor {
 		try {
 			return executeUpdate(ps, parametes);
 		} finally {
-			try {
-				ps.clearParameters();
-				ps.clearBatch();
-			} catch (Exception e) {
-				stateMap.remove(sql);
-			}
+			close(ps);
 		}
 	}
 
@@ -159,7 +155,11 @@ public class SQLExecutor {
 
 	public ResultSet query(String sql, Object[] parametes) throws SQLException {
 		PreparedStatement ps = getStatement(sql);
-		return query(ps, parametes);
+		try{
+			return query(ps, parametes);
+		}finally{
+			close(ps);
+		}
 	}
 
 	public ResultSet query(PreparedStatement ps, Object[] parametes) throws SQLException {
@@ -225,11 +225,7 @@ public class SQLExecutor {
 			return e;
 		} finally {
 			close(rs);
-			try {
-				ps.clearParameters();
-			} catch (Exception e) {
-				stateMap.remove(sql);
-			}
+			close(ps);
 		}
 	}
 
@@ -270,11 +266,15 @@ public class SQLExecutor {
 	public <E> List<E> queryList(String sql, Object[] parameters, Class<E> clazz, ResultSetParser<E> parser)
 			throws SQLException {
 		PreparedStatement ps = getStatement(sql);
-		ResultSet rs = query(ps, parameters);
 		List<E> list = new ArrayList<E>();
-		while (rs.next()) {
-			E e = parser.parse(rs, clazz);
-			list.add(e);
+		try {
+			ResultSet rs = query(ps, parameters);
+			while (rs.next()) {
+				E e = parser.parse(rs, clazz);
+				list.add(e);
+			}
+		}finally {
+			close(ps);
 		}
 		return list;
 	}
@@ -287,22 +287,18 @@ public class SQLExecutor {
 	 */
 	public PreparedStatement prepareStatement(String sql) throws SQLException {
 		PreparedStatement state = getStatement(sql);
-		putStatement(sql, state);
 		return state;
 	}
 
 	final Connection getConnection() {
 		if (connection == null) {
-			stateMap.clear();
 			throw new NullPointerException("Connection is Null!");
 		}
 		try {
 			if (connection.isClosed()) {
-				stateMap.clear();
 				throw new RuntimeException("connection is closed");
 			}
 		} catch (SQLException e) {
-			stateMap.clear();
 			throw new RuntimeException(e);
 		}
 		return connection;
@@ -313,11 +309,6 @@ public class SQLExecutor {
 			connection.close();
 			connection = null;
 		}
-		stateMap.clear();
-	}
-
-	PreparedStatement putStatement(String sqlKey, PreparedStatement state) {
-		return stateMap.put(sqlKey, state);
 	}
 
 	/**
@@ -329,7 +320,7 @@ public class SQLExecutor {
 	 * @throws SQLException
 	 */
 	PreparedStatement getStatement(String sqlKey) throws SQLException {
-		PreparedStatement state = stateMap.get(sqlKey);
+		PreparedStatement state = createStatement(sqlKey);
 		if (state == null || state.isClosed()) {
 			state = createStatement(sqlKey);
 		}
@@ -339,20 +330,30 @@ public class SQLExecutor {
 
 	PreparedStatement createStatement(String sqlKey) throws SQLException {
 		PreparedStatement state = getConnection().prepareStatement(sqlKey);
-		putStatement(sqlKey, state);
+		state.setQueryTimeout(getQueryTimeout());
 		return state;
 	}
 
-	private void close(ResultSet rs) {
-		if (rs != null) {
-			try {
-				rs.close();
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-		}
-
-	}
+	/**
+     * 构建SQL语句的日志。
+     * 
+     * @param sql
+     * @param parameters
+     * @return
+     */
+    static String genratorSQLLog(String sql, Object[] parameters) {
+    	StringBuilder sb = new StringBuilder();
+    	sb.append("SQL:").append(sql);
+    	if (parameters != null && parameters.length > 0) {
+    		sb.append("Params[");
+    		for (Object obj : parameters) {
+    			sb.append(obj).append(",");
+    		}
+    		sb.append("]");
+    	}
+    
+    	return sb.toString();
+    }
 
 	/**
 	 * 关闭执行器，执行器关闭也将关闭Connection.
@@ -360,40 +361,28 @@ public class SQLExecutor {
 	 * @throws SQLException
 	 */
 	public void abort() throws SQLException {
-		for (Entry<String, PreparedStatement> entry : stateMap.entrySet()) {
-			closeStatement(entry.getKey());
-		}
-		stateMap.clear();
 		closeConnection();
 	}
 
-	void closeStatement(String sqlKey) throws SQLException {
-		Statement state = stateMap.get(sqlKey);
-		if (state != null) {
-			state.close();
-		}
-	}
+	private void close(Statement ps) throws SQLException {
+       if(ps != null) {
+           ps.close();
+       }
+        
+    }
 
-	/**
-	 * 构建SQL语句的日志。
-	 * 
-	 * @param sql
-	 * @param parameters
-	 * @return
-	 */
-	static String genratorSQLLog(String sql, Object[] parameters) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("SQL:").append(sql);
-		if (parameters != null && parameters.length > 0) {
-			sb.append("Params[");
-			for (Object obj : parameters) {
-				sb.append(obj).append(",");
-			}
-			sb.append("]");
-		}
-
-		return sb.toString();
-	}
+	
+	
+	private void close(ResultSet rs) {
+    	if (rs != null) {
+    		try {
+    			rs.close();
+    		} catch (SQLException e) {
+    			e.printStackTrace();
+    		}
+    	}
+    
+    }
 
 	/**
 	 * @param ps

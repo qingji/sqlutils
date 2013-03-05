@@ -11,7 +11,6 @@ import org.junit.Test;
 
 public class Examples {
 	
-	@Test
 	public void dropUserTable() throws SQLException {
 		String sql = "drop table user";
 		System.out.println(sql);
@@ -20,7 +19,6 @@ public class Examples {
 		
 	}
 	
-	@Test
 	public void createUserTable() throws SQLException {
 		
 		 String sql = 
@@ -36,7 +34,6 @@ public class Examples {
 	}
 	
 
-	@Test
 	public void insertUser() throws SQLException {
 		Connection conn = ConnectionFactory.getConnection();
 
