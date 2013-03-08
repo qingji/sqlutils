@@ -1,5 +1,6 @@
 package im.qingji.sqlutil;
 
+import im.qingji.sqlutil.config.SQLUtilConfigurator;
 import im.qingji.sqlutil.rsparse.ResultSetParser;
 import im.qingji.sqlutil.rsparse.impl.ObjectResultParser;
 import im.qingji.sqlutil.rsparse.impl.ReflectResultParser;
@@ -34,7 +35,7 @@ public class SQLExecutor {
 
 	private Connection connection;
 
-	private int queryTimeout = 0;
+	private int queryTimeout = SQLUtilConfigurator.getInt("queryTimeout", 180);
 	
 	/**
 	 * 根据Connection 生成执行器。 当执行器关闭时，也就代表着Connection关闭。

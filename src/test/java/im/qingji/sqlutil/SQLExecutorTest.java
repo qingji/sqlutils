@@ -1,5 +1,7 @@
 package im.qingji.sqlutil;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import im.qingji.sqlutil.connection.ConnectionFactory;
 import im.qingji.sqlutil.examples.User;
 import im.qingji.sqlutil.rsparse.ResultSetParser;
@@ -11,7 +13,7 @@ import java.util.List;
 
 import org.junit.Before;
 import org.junit.Ignore;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 /**
  * SQL执行器
@@ -24,7 +26,7 @@ public class SQLExecutorTest {
 
 	private SQLExecutor executor;
 
-	@Ignore @Before
+	@Before
 	public void setUp() throws Exception {
 		Connection connection = ConnectionFactory.getConnection();
 		connection.setAutoCommit(false);
@@ -32,7 +34,7 @@ public class SQLExecutorTest {
 		fillData();
 	}
 
-	@Ignore
+	@Test
 	public void fillData() throws SQLException {
 		User e = new User();
 		e.setId(1);

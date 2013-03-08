@@ -5,7 +5,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
@@ -83,7 +86,12 @@ public class SQLUtilConfigurator {
 	}
 
 	public static final void load(URL url) {
-		load(url.getFile());
+		
+		try {
+	        load(new File(URLDecoder.decode(url.getPath(), Charset.defaultCharset().displayName())));
+        } catch (UnsupportedEncodingException e) {
+	        e.printStackTrace();
+        }
 	}
 
 	public static final void load(File file) {

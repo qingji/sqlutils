@@ -26,8 +26,8 @@ public class BoneCPPoolConnector implements Connector {
 			if (connectionPool == null) {
 				connectionPool = initConnectionPool(url, user, password);
 			}
-			return connectionPool.getConnection();
 		}
+		return connectionPool.getConnection();
 	}
 
 	private synchronized BoneCP initConnectionPool(String url, String user, String password) throws SQLException {
@@ -37,12 +37,15 @@ public class BoneCPPoolConnector implements Connector {
 		config.setJdbcUrl(url);
 		config.setUsername(user);
 		config.setPassword(password);
-		config.setPartitionCount(1);
+		config.setConnectionTimeout(3, TimeUnit.MINUTES);
+//		config.setPartitionCount(1);
 		config.setMinConnectionsPerPartition(ConnectionPoolConfig.getMinConnections());
 		System.out.println("BoneCPPoolConnector.initConnectionPool - MinConnections:"+ConnectionPoolConfig.getMinConnections());
 		config.setMaxConnectionsPerPartition(ConnectionPoolConfig.getMaxConnections());
 		System.out.println("BoneCPPoolConnector.initConnectionPool - MaxConnections:"+ConnectionPoolConfig.getMaxConnections());
-		config.setMaxConnectionAge(10, TimeUnit.MINUTES);
+//		config.setMaxConnectionAge(10, TimeUnit.HOURS);
+		config.setLogStatementsEnabled(true);
+		config.setCloseConnectionWatch(ConnectionPoolConfig.getTestModel());
 		return new BoneCP(config); // setup the connection pool
 	}
 

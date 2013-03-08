@@ -4,6 +4,7 @@ public class ConnectionPoolConfig {
 
 	private static final int DEFUALT_MIN_CONNECTIONS = 2;
 	private static final int DEFUALT_MAX_CONNECTIONS = 5;
+	private static final boolean DEFUALT_TEST_MODEL = false;
 	
 	public ConnectionPoolConfig() {
 		load();
@@ -18,6 +19,11 @@ public class ConnectionPoolConfig {
 	public static int getMaxConnections() {
 		return SQLUtilConfigurator.getInt("connectionManager.MaxConnections", DEFUALT_MAX_CONNECTIONS);
 	}
+	
+	public static boolean getTestModel() {
+		return SQLUtilConfigurator.getBoolean("connectionManager.testModel", DEFUALT_TEST_MODEL);
+	}
+	
 	
 	
 }

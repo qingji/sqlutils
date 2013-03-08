@@ -4,6 +4,7 @@ import im.qingji.sqlutil.config.ConnectionPoolConfig;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 import com.jolbox.bonecp.BoneCPDataSource;
 
@@ -13,26 +14,35 @@ import com.jolbox.bonecp.BoneCPDataSource;
  *
  */
 public class BoneCPDataSourceConnector extends AbstractConnector {
-
+	
+	private static final Object lock = new Object();
 	private static BoneCPDataSource ds;
 	
 	@Override
 	public Connection connect(String url, String user, String password)
 			throws SQLException {
-		if(ds == null) {
-			ds = initDataSource(url, user, password);	
+		synchronized (lock) {
+			if(ds == null) {
+				ds = initDataSource(url, user, password);	
+			}
 		}
 		return ds.getConnection();
 	}
 	
-	private BoneCPDataSource initDataSource(String url, String user, String password) {
+	private synchronized BoneCPDataSource initDataSource(String url, String user, String password) {
 		BoneCPDataSource ds = new BoneCPDataSource();  // create a new datasource object
-		ds.setJdbcUrl(url);		// set the JDBC url
-		ds.setUsername(user);				// set the username
+		ds.setJdbcUrl(url);
+		ds.setUsername(user);
 		ds.setPassword(password);
-		ds.setPartitionCount(1);
+		ds.setConnectionTimeout(3, TimeUnit.MINUTES);
+//		config.setPartitionCount(1);
 		ds.setMinConnectionsPerPartition(ConnectionPoolConfig.getMinConnections());
+		System.out.println("BoneCPPoolConnector.initConnectionPool - MinConnections:"+ConnectionPoolConfig.getMinConnections());
 		ds.setMaxConnectionsPerPartition(ConnectionPoolConfig.getMaxConnections());
+		System.out.println("BoneCPPoolConnector.initConnectionPool - MaxConnections:"+ConnectionPoolConfig.getMaxConnections());
+//		config.setMaxConnectionAge(10, TimeUnit.HOURS);
+		ds.setLogStatementsEnabled(true);
+		ds.setCloseConnectionWatch(ConnectionPoolConfig.getTestModel());
 		return ds;
 	}
 	

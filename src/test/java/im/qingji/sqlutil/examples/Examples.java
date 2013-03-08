@@ -9,31 +9,31 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
+
 public class Examples {
-	
+	@Test
 	public void dropUserTable() throws SQLException {
-		String sql = "drop table user";
+		String sql = "drop table tbl_user";
 		System.out.println(sql);
 		Connection conn = ConnectionFactory.getConnection();
 		conn.createStatement().execute(sql);
 		
 	}
-	
+	@Test
 	public void createUserTable() throws SQLException {
 		
 		 String sql = 
 			"CREATE TABLE tbl_user (" +
-		 		"id number NOT NULL , " +
+		 		"id int NOT NULL , " +
 		 		"name VARCHAR(45) NOT NULL, " +
-		 		"pwd VARCHAR(45) NOT NULL, " +
-		 		"PRIMARY KEY (id)" +
+		 		"pwd VARCHAR(45) NOT NULL " +
 		 	")";
 		System.out.println(sql);
 		Connection conn = ConnectionFactory.getConnection();
 		conn.createStatement().execute(sql);
 	}
 	
-
+	@Test
 	public void insertUser() throws SQLException {
 		Connection conn = ConnectionFactory.getConnection();
 
@@ -53,6 +53,10 @@ public class Examples {
 		}catch (Exception e) {
 			System.out.println(Arrays.toString(result));
 		throw new RuntimeException(e);
+		}finally {
+			ps.close();
+			conn.close();
+			ConnectionFactory.getDefaultConnector().clear();
 		}
 		System.out.println("==========insertUsers ps.executeBatch() begin======");
 		for (int i : result) {
