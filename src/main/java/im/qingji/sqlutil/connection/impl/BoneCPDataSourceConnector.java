@@ -41,7 +41,7 @@ public class BoneCPDataSourceConnector extends AbstractConnector {
 		ds.setMaxConnectionsPerPartition(ConnectionPoolConfig.getMaxConnections());
 		System.out.println("BoneCPPoolConnector.initConnectionPool - MaxConnections:"+ConnectionPoolConfig.getMaxConnections());
 //		config.setMaxConnectionAge(10, TimeUnit.HOURS);
-		ds.setLogStatementsEnabled(true);
+		ds.setLogStatementsEnabled(ConnectionPoolConfig.getTestModel());
 		ds.setCloseConnectionWatch(ConnectionPoolConfig.getTestModel());
 		return ds;
 	}

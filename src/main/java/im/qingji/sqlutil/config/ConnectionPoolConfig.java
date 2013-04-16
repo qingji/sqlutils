@@ -24,6 +24,4 @@ public class ConnectionPoolConfig {
 		return SQLUtilConfigurator.getBoolean("connectionManager.testModel", DEFUALT_TEST_MODEL);
 	}
 	
-	
-	
 }

@@ -44,7 +44,7 @@ public class BoneCPPoolConnector implements Connector {
 		config.setMaxConnectionsPerPartition(ConnectionPoolConfig.getMaxConnections());
 		System.out.println("BoneCPPoolConnector.initConnectionPool - MaxConnections:"+ConnectionPoolConfig.getMaxConnections());
 //		config.setMaxConnectionAge(10, TimeUnit.HOURS);
-		config.setLogStatementsEnabled(true);
+		config.setLogStatementsEnabled(ConnectionPoolConfig.getTestModel());
 		config.setCloseConnectionWatch(ConnectionPoolConfig.getTestModel());
 		return new BoneCP(config); // setup the connection pool
 	}
